@@ -1,21 +1,27 @@
-import 'package:chennai_task_2/services/get_repo_data.dart';
 import 'package:chennai_task_2/views/details.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/repo_provider.dart';
 
 class MyHomePage extends StatelessWidget {
-  const MyHomePage({super.key});
-
+  MyHomePage({super.key});
+  int count = 0;
+  ScrollController scrollController = ScrollController();
   @override
   Widget build(BuildContext context) {
-    RepoServices.instance.getData();
-    Provider.of<RepoController>(context, listen: false).getRepo();
     return Scaffold(
       appBar: AppBar(
+        automaticallyImplyLeading: false,
         title: const Text('Repository List'),
       ),
       body: Consumer<RepoController>(builder: (context, repoData, _) {
+        scrollController.addListener(() {
+          if (scrollController.position.pixels ==
+              scrollController.position.maxScrollExtent) {
+            Future.delayed(
+                const Duration(seconds: 3), () => repoData.getRepo(++count));
+          }
+        });
         return
             //handle loading state
             repoData.isLoading
@@ -27,24 +33,31 @@ class MyHomePage extends StatelessWidget {
                     :
                     //handle success state
                     ListView.builder(
-                        itemCount: repoData.repo.length,
+                        controller: scrollController,
+                        itemCount: repoData.repo.length + 1,
                         itemBuilder: (context, index) {
-                          final data = repoData.repo[index];
-                          return Card(
-                            child: ListTile(
-                                onTap: () => Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          RepoDetailsPage(repo: data),
-                                    )),
-                                leading: CircleAvatar(
-                                  backgroundImage: NetworkImage(data.avatar),
-                                ),
-                                title: Text(data.name),
-                                subtitle: Text(data.ownerName),
-                                trailing: StarWidget(starCount: data.stars)),
-                          );
+                          if (index == repoData.repo.length) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          } else {
+                            final data = repoData.repo[index];
+                            return Card(
+                              child: ListTile(
+                                  onTap: () => Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            RepoDetailsPage(repo: data),
+                                      )),
+                                  leading: CircleAvatar(
+                                    backgroundImage: NetworkImage(data.avatar),
+                                  ),
+                                  title: Text(data.name),
+                                  subtitle: Text(data.ownerName),
+                                  trailing: StarWidget(starCount: data.stars)),
+                            );
+                          }
                         },
                       );
       }),

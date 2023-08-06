@@ -1,11 +1,9 @@
-import 'dart:convert';
+// ignore_for_file: control_flow_in_finally
+
 import 'dart:developer';
-
 import 'package:chennai_task_2/models/repo_model.dart';
-import 'package:http/http.dart' as http;
+import 'package:chennai_task_2/services/remote_services.dart';
 import 'package:sqflite/sqflite.dart';
-
-import '../constants/app_constants.dart';
 
 class RepoServices {
   RepoServices._();
@@ -16,7 +14,6 @@ class RepoServices {
   static const String tableName = 'RepoDatas';
 
   Future<void> initDb() async {
-    await deleteDatabase(dbName);
     database = await openDatabase(
       dbName,
       version: 1,
@@ -27,14 +24,14 @@ class RepoServices {
             .then((value) => log('cre'));
       },
     );
-    await addData();
   }
 
   //get Data from api
-  Future<void> addData() async {
-    final response = await http.get(Uri.parse(baseUrl));
-    for (var e in (json.decode(response.body)['items'] as List)) {
-      insert(RepoModel.fromJson(e, false).toJson());
+  Future<void> addData(int limit) async {
+    try {
+      await RemoteSservices.instance.getDataFromRemote(database!, limit);
+    } catch (e) {
+      log(e.toString());
     }
   }
 
@@ -42,9 +39,17 @@ class RepoServices {
     await database!.insert(tableName, data).then((value) => log('inserted'));
   }
 
-  Future<List<RepoModel>> getData() async {
-    final result = await database!.rawQuery('SELECT * FROM $tableName');
+  Future<List<RepoModel>> getData(int limit) async {
+    try {
+      await addData(limit);
+    } catch (_) {
+    } finally {
+      final result = await database!
+          .rawQuery('SELECT * FROM $tableName LIMIT 10 OFFSET ${limit * 10}');
 
-    return result.map((e) => RepoModel.fromJson(e, true)).toList();
+      return result.map((e) => RepoModel.fromJson(e, true)).toList();
+    }
   }
 }
+
+enum Status { success, error }

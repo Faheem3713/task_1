@@ -1,8 +1,10 @@
 import 'package:chennai_task_2/controllers/repo_provider.dart';
-import 'package:chennai_task_2/services/get_repo_data.dart';
+import 'package:chennai_task_2/views/loader_page.dart';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'views/home.dart';
+
+import 'services/local_services.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,7 +25,7 @@ class MyApp extends StatelessWidget {
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           useMaterial3: true,
         ),
-        home: const MyHomePage(),
+        home: const LoaderPage(),
       ),
     );
   }
